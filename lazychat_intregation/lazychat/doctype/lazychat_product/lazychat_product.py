@@ -39,9 +39,17 @@ class LazyChatProduct(Document):
 			})
 			frappe.throw("LazyChat Shop Token is missing in LazyChat Settings.")
 
+		stock_qty = float(self.stock_qty or 0.0)
+		regular_price = float(self.regular_price or 0.0)
+
 		payload = {
 			"title": self.title,
-			"regular_price": float(self.regular_price or 0.0),
+			"regular_price": regular_price,
+			"price": regular_price,
+			"stock_qty": stock_qty,
+			"quantity": stock_qty,
+			"stock": stock_qty,
+			"in_stock": True if stock_qty > 0 else False,
 			"thumbnail_image": self.get_image_url(),
 			"sku": self.sku,
 			"brand": self.brand or "",
@@ -96,8 +104,10 @@ def sync_single_product(docname: str):
 def generate_lazychat_products_from_items():
 	"""
 	Utility to pull enabled ERPNext Items into LazyChat Product DocType records,
-	and enqueue them for sync.
+	calculate latest price and stock quantity, and enqueue them for sync.
 	"""
+	from lazychat_intregation.utils.product_sync import get_item_price, get_item_stock_qty
+
 	settings = frappe.get_single("LazyChat Settings")
 	items = frappe.get_all("Item", filters={"disabled": 0}, fields=["name", "item_code", "item_name", "image", "brand", "standard_rate"])
 
@@ -105,18 +115,17 @@ def generate_lazychat_products_from_items():
 	updated = 0
 
 	for item in items:
-		# Check price from price list if configured
-		rate = float(item.standard_rate or 0.0)
-		if settings.default_price_list:
-			ip = frappe.get_all("Item Price", filters={"item_code": item.item_code, "price_list": settings.default_price_list, "selling": 1}, fields=["price_list_rate"], limit=1)
-			if ip and ip[0].price_list_rate:
-				rate = float(ip[0].price_list_rate)
+		rate = get_item_price(item.item_code, settings.default_price_list, fallback_rate=item.standard_rate or 0.0)
+		stock_qty = get_item_stock_qty(item.item_code, settings.default_warehouse)
+		in_stock = 1 if stock_qty > 0 else 0
 
 		if frappe.db.exists("LazyChat Product", item.item_code):
 			doc = frappe.get_doc("LazyChat Product", item.item_code)
 			doc.title = item.item_name or item.item_code
 			doc.item = item.name
 			doc.regular_price = rate
+			doc.stock_qty = stock_qty
+			doc.in_stock = in_stock
 			doc.thumbnail_image = item.image or ""
 			doc.brand = item.brand or ""
 			doc.partner_id = item.item_code
@@ -129,6 +138,8 @@ def generate_lazychat_products_from_items():
 				"title": item.item_name or item.item_code,
 				"item": item.name,
 				"regular_price": rate,
+				"stock_qty": stock_qty,
+				"in_stock": in_stock,
 				"thumbnail_image": item.image or "",
 				"brand": item.brand or "",
 				"partner_id": item.item_code,

@@ -143,7 +143,17 @@ doc_events = {
 	"Item": {
 		# Push create/update to LazyChat API whenever an Item is saved
 		"on_update": "lazychat_intregation.utils.product_sync.on_item_update",
-	}
+	},
+	"Item Price": {
+		# Re-sync product price to LazyChat API whenever Item Price changes or is deleted
+		"on_update": "lazychat_intregation.utils.product_sync.on_item_price_update",
+		"on_trash": "lazychat_intregation.utils.product_sync.on_item_price_update",
+	},
+	"Stock Ledger Entry": {
+		# Re-sync product stock qty to LazyChat API whenever inventory changes
+		"on_submit": "lazychat_intregation.utils.product_sync.on_stock_ledger_update",
+		"on_cancel": "lazychat_intregation.utils.product_sync.on_stock_ledger_update",
+	},
 }
 
 # Scheduled Tasks

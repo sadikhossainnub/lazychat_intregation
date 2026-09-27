@@ -10,6 +10,8 @@
   "sku",
   "item",
   "regular_price",
+  "stock_qty",
+  "in_stock",
   "thumbnail_image",
   "brand",
   "partner_id",
@@ -47,6 +49,20 @@
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Regular Price"
+  },
+  {
+   "fieldname": "stock_qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Stock Qty"
+  },
+  {
+   "default": "0",
+   "fieldname": "in_stock",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "In Stock",
+   "read_only": 1
   },
   {
    "fieldname": "thumbnail_image",
