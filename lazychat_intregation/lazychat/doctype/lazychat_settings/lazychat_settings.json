@@ -1,0 +1,135 @@
+{
+ "actions": [],
+ "creation": "2026-09-26 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "lazychat_api_section",
+  "shop_token",
+  "column_break_1",
+  "order_fetch_section",
+  "enable_auto_fetch_orders",
+  "fetch_orders_url",
+  "column_break_fetch",
+  "last_order_fetch_datetime",
+  "erpnext_defaults_section",
+  "default_company",
+  "default_customer_group",
+  "column_break_2",
+  "default_price_list",
+  "default_warehouse",
+  "default_currency"
+ ],
+ "fields": [
+  {
+   "fieldname": "lazychat_api_section",
+   "fieldtype": "Section Break",
+   "label": "LazyChat API Configuration"
+  },
+  {
+   "description": "Bearer Shop Token for LazyChat API",
+   "fieldname": "shop_token",
+   "fieldtype": "Password",
+   "label": "LazyChat Shop Token",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "order_fetch_section",
+   "fieldtype": "Section Break",
+   "label": "Order Fetch Configuration (10-Min Polling)"
+  },
+  {
+   "default": "1",
+   "description": "Automatically fetch orders from LazyChat API every 10 minutes",
+   "fieldname": "enable_auto_fetch_orders",
+   "fieldtype": "Check",
+   "label": "Enable 10-Minute Auto Order Fetch"
+  },
+  {
+   "default": "https://app.lazychat.io/api/v1/orders",
+   "description": "LazyChat Orders API URL endpoint to GET orders",
+   "fieldname": "fetch_orders_url",
+   "fieldtype": "Data",
+   "label": "Fetch Orders API URL"
+  },
+  {
+   "fieldname": "column_break_fetch",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "last_order_fetch_datetime",
+   "fieldtype": "Datetime",
+   "label": "Last Order Fetch Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "erpnext_defaults_section",
+   "fieldtype": "Section Break",
+   "label": "ERPNext Defaults"
+  },
+  {
+   "fieldname": "default_company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "default_customer_group",
+   "fieldtype": "Link",
+   "label": "Customer Group",
+   "options": "Customer Group"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "default_price_list",
+   "fieldtype": "Link",
+   "label": "Price List (for product pricing)",
+   "options": "Price List"
+  },
+  {
+   "fieldname": "default_warehouse",
+   "fieldtype": "Link",
+   "label": "Warehouse",
+   "options": "Warehouse"
+  },
+  {
+   "fieldname": "default_currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency"
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-09-26 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "LazyChat",
+ "name": "LazyChat Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -1,0 +1,126 @@
+{
+ "actions": [],
+ "autoname": "field:sku",
+ "creation": "2026-09-26 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "sku",
+  "item",
+  "regular_price",
+  "thumbnail_image",
+  "brand",
+  "partner_id",
+  "column_break_1",
+  "synced_to_lazychat",
+  "sync_status",
+  "last_sync_datetime",
+  "sync_error"
+ ],
+ "fields": [
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Product Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sku",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "SKU",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "ERPNext Item",
+   "options": "Item"
+  },
+  {
+   "fieldname": "regular_price",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Regular Price"
+  },
+  {
+   "fieldname": "thumbnail_image",
+   "fieldtype": "Attach Image",
+   "label": "Thumbnail Image"
+  },
+  {
+   "fieldname": "brand",
+   "fieldtype": "Data",
+   "label": "Brand"
+  },
+  {
+   "fieldname": "partner_id",
+   "fieldtype": "Data",
+   "label": "Partner ID"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "synced_to_lazychat",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Synced to LazyChat",
+   "read_only": 1
+  },
+  {
+   "default": "Pending",
+   "fieldname": "sync_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Sync Status",
+   "options": "Pending\nSynced\nFailed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_sync_datetime",
+   "fieldtype": "Datetime",
+   "label": "Last Sync Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sync_error",
+   "fieldtype": "Small Text",
+   "label": "Sync Error",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-09-26 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "LazyChat",
+ "name": "LazyChat Product",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
