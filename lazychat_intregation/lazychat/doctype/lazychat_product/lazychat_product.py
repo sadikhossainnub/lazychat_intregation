@@ -39,8 +39,11 @@ class LazyChatProduct(Document):
 			})
 			frappe.throw("LazyChat Shop Token is missing in LazyChat Settings.")
 
-		stock_qty = float(self.stock_qty or 0.0)
-		regular_price = float(self.regular_price or 0.0)
+		enable_price = bool(getattr(settings, "enable_price_sync", True))
+		enable_stock = bool(getattr(settings, "enable_stock_sync", True))
+
+		stock_qty = float(self.stock_qty or 0.0) if enable_stock else 0.0
+		regular_price = float(self.regular_price or 0.0) if enable_price else 0.0
 
 		payload = {
 			"title": self.title,
@@ -49,7 +52,7 @@ class LazyChatProduct(Document):
 			"stock_qty": stock_qty,
 			"quantity": stock_qty,
 			"stock": stock_qty,
-			"in_stock": True if stock_qty > 0 else False,
+			"in_stock": (stock_qty > 0) if enable_stock else False,
 			"thumbnail_image": self.get_image_url(),
 			"sku": self.sku,
 			"brand": self.brand or "",

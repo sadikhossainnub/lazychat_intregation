@@ -8,6 +8,9 @@
   "lazychat_api_section",
   "shop_token",
   "column_break_1",
+  "product_sync_section",
+  "enable_price_sync",
+  "enable_stock_sync",
   "order_fetch_section",
   "enable_auto_fetch_orders",
   "fetch_orders_url",
@@ -37,6 +40,25 @@
   {
    "fieldname": "column_break_1",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "product_sync_section",
+   "fieldtype": "Section Break",
+   "label": "Product Sync Settings"
+  },
+  {
+   "default": "1",
+   "description": "Sync product prices from ERPNext to LazyChat API",
+   "fieldname": "enable_price_sync",
+   "fieldtype": "Check",
+   "label": "Enable Price Sync"
+  },
+  {
+   "default": "1",
+   "description": "Sync stock quantities from ERPNext to LazyChat API",
+   "fieldname": "enable_stock_sync",
+   "fieldtype": "Check",
+   "label": "Enable Stock Qty Sync"
   },
   {
    "fieldname": "order_fetch_section",
