@@ -87,7 +87,7 @@ doctype_js = {
 # ------------
 
 # before_install = "lazychat_intregation.install.before_install"
-# after_install = "lazychat_intregation.install.after_install"
+after_install = "lazychat_intregation.setup.after_install"
 
 # Uninstallation
 # ------------
@@ -143,6 +143,8 @@ doc_events = {
 	"Item": {
 		# Push create/update to LazyChat API whenever an Item is saved
 		"on_update": "lazychat_intregation.utils.product_sync.on_item_update",
+		# Delete product from LazyChat API whenever an Item is deleted
+		"on_trash": "lazychat_intregation.utils.product_sync.on_item_trash",
 	},
 	"Item Price": {
 		# Re-sync product price to LazyChat API whenever Item Price changes or is deleted
@@ -255,4 +257,16 @@ scheduler_events = {
 # ------------
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
+
+# Fixtures
+# --------
+fixtures = [
+	{
+		"dt": "Role",
+		"filters": [
+			["name", "in", ["LazyChat Manager", "LazyChat User"]]
+		]
+	}
+]
+
 

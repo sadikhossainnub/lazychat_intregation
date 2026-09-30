@@ -19,6 +19,17 @@ class LazyChatProduct(Document):
 			enqueue_after_commit=True,
 		)
 
+	def on_trash(self):
+		"""Automatically enqueue delete API call to LazyChat API when LazyChat Product document is deleted."""
+		sku = self.sku or self.name
+		if sku:
+			frappe.enqueue(
+				"lazychat_intregation.utils.product_sync.delete_product_from_lazychat_api",
+				sku=sku,
+				queue="short",
+				enqueue_after_commit=True,
+			)
+
 	def get_image_url(self) -> str:
 		"""Return absolute image URL for thumbnail_image."""
 		if not self.thumbnail_image:

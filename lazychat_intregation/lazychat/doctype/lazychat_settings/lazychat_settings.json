@@ -11,6 +11,7 @@
   "product_sync_section",
   "enable_price_sync",
   "enable_stock_sync",
+  "delete_product_url",
   "order_fetch_section",
   "enable_auto_fetch_orders",
   "fetch_orders_url",
@@ -59,6 +60,13 @@
    "fieldname": "enable_stock_sync",
    "fieldtype": "Check",
    "label": "Enable Stock Qty Sync"
+  },
+  {
+   "default": "https://app.lazychat.io/api/v1/products/delete",
+   "description": "LazyChat Product Delete API / Webhook URL endpoint",
+   "fieldname": "delete_product_url",
+   "fieldtype": "Data",
+   "label": "Delete Product API URL"
   },
   {
    "fieldname": "order_fetch_section",
@@ -148,6 +156,30 @@
    "role": "System Manager",
    "share": 1,
    "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "LazyChat Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "LazyChat User",
+   "share": 0,
+   "write": 0
   }
  ],
  "sort_field": "modified",

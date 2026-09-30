@@ -1,4 +1,5 @@
 import frappe
+import requests
 
 
 def get_item_stock_qty(item_code: str, warehouse: str | None = None) -> float:
@@ -116,6 +117,64 @@ def on_item_update(doc, method=None) -> None:
 		queue="short",
 		enqueue_after_commit=True,
 	)
+
+
+def on_item_trash(doc, method=None) -> None:
+	"""Frappe doc event hook for Item on_trash (when an Item is deleted in ERPNext)."""
+	sku = doc.item_code or doc.name
+	if not sku:
+		return
+
+	if frappe.db.exists("LazyChat Product", sku):
+		frappe.delete_doc("LazyChat Product", sku, ignore_permissions=True)
+	else:
+		frappe.enqueue(
+			"lazychat_intregation.utils.product_sync.delete_product_from_lazychat_api",
+			sku=sku,
+			queue="short",
+			enqueue_after_commit=True,
+		)
+
+
+def delete_product_from_lazychat_api(sku: str) -> None:
+	"""
+	Sends delete webhook/API request to LazyChat when a product or Item is deleted in ERPNext.
+	"""
+	if not sku:
+		return
+
+	settings = frappe.get_single("LazyChat Settings")
+	shop_token = settings.get_password("shop_token") if getattr(settings, "shop_token", None) else None
+
+	if not shop_token:
+		frappe.log_error("LazyChat Shop Token is missing in LazyChat Settings.", f"LazyChat Delete Product Failed ({sku})")
+		return
+
+	delete_url = getattr(settings, "delete_product_url", None) or "https://app.lazychat.io/api/v1/products/delete"
+
+	payload = {
+		"product_id": sku,
+		"sku": sku,
+		"id": sku,
+	}
+
+	headers = {
+		"Authorization": f"Bearer {shop_token}",
+		"X-Webhook-Topic": "product/delete",
+		"Content-Type": "application/json",
+		"Accept": "application/json",
+	}
+
+	try:
+		response = requests.post(delete_url, json=payload, headers=headers, timeout=10)
+		if response.ok or response.status_code in (200, 201, 202, 204):
+			frappe.logger("lazychat").info(f"LazyChat Product Deleted successfully via API: {sku}")
+		else:
+			err_msg = f"HTTP {response.status_code}: {response.text}"
+			frappe.log_error(f"LazyChat Product Delete Failed ({sku}): {err_msg}", "LazyChat API Delete Error")
+	except Exception as e:
+		frappe.log_error(frappe.get_traceback(), f"LazyChat Product Delete Exception ({sku})")
+
 
 
 def on_item_price_update(doc, method=None) -> None:

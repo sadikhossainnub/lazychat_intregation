@@ -1,0 +1,18 @@
+[
+ {
+  "desk_access": 1,
+  "disabled": 0,
+  "doctype": "Role",
+  "is_custom": 1,
+  "name": "LazyChat Manager",
+  "role_name": "LazyChat Manager"
+ },
+ {
+  "desk_access": 1,
+  "disabled": 0,
+  "doctype": "Role",
+  "is_custom": 1,
+  "name": "LazyChat User",
+  "role_name": "LazyChat User"
+ }
+]
