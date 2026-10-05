@@ -17,6 +17,9 @@ def create_order():
 	"""
 	validate_bearer_token("order_api_token")
 	settings = frappe.get_single("LazyChat Settings")
+	
+	if not bool(getattr(settings, "enable_integration", True)):
+		frappe.throw("LazyChat Integration is currently disabled", frappe.PermissionError)
 
 	try:
 		data = json.loads(frappe.request.data or "{}")

@@ -5,6 +5,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "enable_integration",
   "lazychat_api_section",
   "shop_token",
   "column_break_1",
@@ -26,6 +27,13 @@
   "default_currency"
  ],
  "fields": [
+  {
+   "default": "1",
+   "description": "Master toggle to enable or disable all LazyChat integration features (product sync, order fetch, etc.)",
+   "fieldname": "enable_integration",
+   "fieldtype": "Check",
+   "label": "Enable LazyChat Integration"
+  },
   {
    "fieldname": "lazychat_api_section",
    "fieldtype": "Section Break",

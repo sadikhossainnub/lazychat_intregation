@@ -326,6 +326,8 @@ def scheduled_fetch_orders():
 	Fetches page 1 of orders from LazyChat.
 	"""
 	settings = frappe.get_single("LazyChat Settings")
+	if not bool(getattr(settings, "enable_integration", True)):
+		return
 	if not settings.enable_auto_fetch_orders:
 		return
 

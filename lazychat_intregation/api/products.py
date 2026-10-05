@@ -16,6 +16,10 @@ def get_products():
 	Authentication: Authorization: Bearer <products_api_token>
 	"""
 	validate_bearer_token("products_api_token")
+	
+	settings = frappe.get_single("LazyChat Settings")
+	if not bool(getattr(settings, "enable_integration", True)):
+		frappe.throw("LazyChat Integration is currently disabled", frappe.PermissionError)
 
 	page = max(1, int(frappe.local.form_dict.get("page", 1)))
 	per_page = max(1, min(int(frappe.local.form_dict.get("per_page", 100)), 500))

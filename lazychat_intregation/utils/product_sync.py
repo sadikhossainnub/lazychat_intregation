@@ -111,6 +111,10 @@ def sync_item_to_lazychat_product(item_code: str) -> None:
 
 def on_item_update(doc, method=None) -> None:
 	"""Frappe doc event hook for Item on_update."""
+	settings = frappe.get_single("LazyChat Settings")
+	if not bool(getattr(settings, "enable_integration", True)):
+		return
+	
 	frappe.enqueue(
 		"lazychat_intregation.utils.product_sync.sync_item_to_lazychat_product",
 		item_code=doc.item_code,
@@ -121,6 +125,10 @@ def on_item_update(doc, method=None) -> None:
 
 def on_item_trash(doc, method=None) -> None:
 	"""Frappe doc event hook for Item on_trash (when an Item is deleted in ERPNext)."""
+	settings = frappe.get_single("LazyChat Settings")
+	if not bool(getattr(settings, "enable_integration", True)):
+		return
+	
 	sku = doc.item_code or doc.name
 	if not sku:
 		return
@@ -180,6 +188,8 @@ def delete_product_from_lazychat_api(sku: str) -> None:
 def on_item_price_update(doc, method=None) -> None:
 	"""Frappe doc event hook for Item Price on_update and on_trash."""
 	settings = frappe.get_single("LazyChat Settings")
+	if not bool(getattr(settings, "enable_integration", True)):
+		return
 	if not bool(getattr(settings, "enable_price_sync", True)):
 		return
 
@@ -195,6 +205,8 @@ def on_item_price_update(doc, method=None) -> None:
 def on_stock_ledger_update(doc, method=None) -> None:
 	"""Frappe doc event hook for Stock Ledger Entry on_submit and on_cancel."""
 	settings = frappe.get_single("LazyChat Settings")
+	if not bool(getattr(settings, "enable_integration", True)):
+		return
 	if not bool(getattr(settings, "enable_stock_sync", True)):
 		return
 
