@@ -1,6 +1,6 @@
 frappe.ui.form.on("Item", {
 	refresh: function(frm) {
-		if (!frm.is_new()) {
+		if (!frm.is_new() && frappe.model.can_read("LazyChat Product")) {
 			frappe.db.get_value("LazyChat Product", { item: frm.doc.name }, ["name", "sync_status", "synced_to_lazychat"], function(r) {
 				if (r && r.name) {
 					var status = r.sync_status || "Pending";
