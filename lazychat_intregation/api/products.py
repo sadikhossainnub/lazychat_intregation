@@ -1,6 +1,50 @@
 import frappe
 from lazychat_intregation.utils.auth import validate_bearer_token
-from lazychat_intregation.utils.product_sync import item_to_lazychat_product
+from lazychat_intregation.utils.product_sync import item_to_lazychat_product, sync_item_to_lazychat_product
+
+
+@frappe.whitelist()
+def publish_item_to_lazychat(item_code: str):
+	"""
+	Manually publish an Item to LazyChat by creating LazyChat Product and syncing it.
+	This method is called when user clicks "Publish to LazyChat" button.
+	
+	Args:
+		item_code: The Item code to publish
+	
+	Returns:
+		dict with success status and message
+	"""
+	if not item_code:
+		frappe.throw("Item Code is required")
+	
+	if not frappe.db.exists("Item", item_code):
+		frappe.throw(f"Item {item_code} does not exist")
+	
+	settings = frappe.get_single("LazyChat Settings")
+	if not bool(getattr(settings, "enable_integration", True)):
+		frappe.throw("LazyChat Integration is disabled in Settings")
+	
+	# Check if already published
+	if frappe.db.exists("LazyChat Product", {"item": item_code}):
+		frappe.throw(f"Item {item_code} is already published to LazyChat. Use 'Sync to LazyChat' to update.")
+	
+	# Create LazyChat Product and sync
+	try:
+		frappe.enqueue(
+			"lazychat_intregation.utils.product_sync.sync_item_to_lazychat_product",
+			item_code=item_code,
+			force_create=True,
+			queue="short",
+			enqueue_after_commit=True,
+		)
+		return {
+			"success": True,
+			"message": f"Item {item_code} is being published to LazyChat"
+		}
+	except Exception as e:
+		frappe.log_error(frappe.get_traceback(), f"LazyChat Publish Error ({item_code})")
+		frappe.throw(f"Failed to publish item: {str(e)}")
 
 
 @frappe.whitelist(allow_guest=True)

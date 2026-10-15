@@ -7,17 +7,9 @@ LAZYCHAT_API_URL = "https://app.lazychat.io/api/v1/products/createOrUpdate"
 
 class LazyChatProduct(Document):
 	def on_update(self):
-		"""Automatically enqueue sync to LazyChat API when saved."""
-		# Prevent recursive loop when updating sync status fields
-		if self.flags.in_sync_update:
-			return
-
-		frappe.enqueue(
-			"lazychat_intregation.lazychat.doctype.lazychat_product.lazychat_product.sync_single_product",
-			docname=self.name,
-			queue="short",
-			enqueue_after_commit=True,
-		)
+		"""Auto-sync disabled. User must manually click 'Sync to LazyChat' button."""
+		# Prevent automatic sync - only sync when explicitly requested via button
+		pass
 
 	def on_trash(self):
 		"""Automatically enqueue delete API call to LazyChat API when LazyChat Product document is deleted."""

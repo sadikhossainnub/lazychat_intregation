@@ -65,11 +65,15 @@ def item_to_lazychat_product(item_doc) -> dict:
 	}
 
 
-def sync_item_to_lazychat_product(item_code: str) -> None:
+def sync_item_to_lazychat_product(item_code: str, force_create: bool = False) -> None:
 	"""
 	When an ERPNext Item, Item Price, or Stock level changes,
 	update the corresponding 'LazyChat Product' document and push to LazyChat API.
 	This runs in system context to avoid permission issues.
+	
+	Args:
+		item_code: The Item code to sync
+		force_create: If True, create new LazyChat Product. If False, only update existing ones.
 	"""
 	if not item_code or not frappe.db.exists("Item", item_code):
 		return
@@ -99,7 +103,8 @@ def sync_item_to_lazychat_product(item_code: str) -> None:
 			doc.partner_id = item.item_code
 			doc.flags.ignore_permissions = True
 			doc.save()
-		else:
+		elif force_create:
+			# Only create new LazyChat Product if explicitly requested
 			doc = frappe.get_doc({
 				"doctype": "LazyChat Product",
 				"sku": item_code,
@@ -125,17 +130,21 @@ def sync_item_to_lazychat_product(item_code: str) -> None:
 
 
 def on_item_update(doc, method=None) -> None:
-	"""Frappe doc event hook for Item on_update."""
+	"""Frappe doc event hook for Item on_update - NOW DISABLED for auto-sync."""
+	# Auto-sync disabled. Users must manually click "Publish to LazyChat" button.
+	# Only update existing LazyChat Product if it already exists (to keep data in sync)
 	settings = frappe.get_single("LazyChat Settings")
 	if not bool(getattr(settings, "enable_integration", True)):
 		return
 	
-	frappe.enqueue(
-		"lazychat_intregation.utils.product_sync.sync_item_to_lazychat_product",
-		item_code=doc.item_code,
-		queue="short",
-		enqueue_after_commit=True,
-	)
+	# Only update if LazyChat Product already exists (don't create new ones automatically)
+	if frappe.db.exists("LazyChat Product", {"item": doc.name}):
+		frappe.enqueue(
+			"lazychat_intregation.utils.product_sync.sync_item_to_lazychat_product",
+			item_code=doc.item_code,
+			queue="short",
+			enqueue_after_commit=True,
+		)
 
 
 def on_item_trash(doc, method=None) -> None:
