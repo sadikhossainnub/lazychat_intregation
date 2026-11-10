@@ -142,12 +142,16 @@ def process_single_lazychat_order(data) -> str | None:
 	if existing_so:
 		return existing_so
 
-	phone = str(data.get("phone") or "").strip()
-	address = str(data.get("address") or "").strip()
+	contact_data = data.get("contact") or {}
+
+	# Phone: prefer contact.phone, fallback to root-level phone
+	phone = str(contact_data.get("phone") or data.get("phone") or "").strip()
+	# Address: prefer contact.address, fallback to root-level address
+	address = str(contact_data.get("address") or data.get("address") or "").strip()
 
 	customer_name = "LazyChat Customer"
-	if isinstance(data.get("contact"), dict) and data.get("contact").get("name"):
-		customer_name = data.get("contact").get("name").strip()
+	if contact_data.get("name"):
+		customer_name = str(contact_data.get("name")).strip()
 	elif data.get("customer_name"):
 		customer_name = str(data.get("customer_name")).strip()
 	elif data.get("name"):
@@ -263,6 +267,7 @@ def fetch_and_process_orders(page: int = 1) -> dict:
 	"""
 	Calls LazyChat POST Orders API (https://app.lazychat.io/api/v1/orders),
 	fetches orders page by page, and creates Sales Orders in ERPNext.
+	If called with page=1 (default), automatically loops through all available pages.
 	"""
 	settings = frappe.get_single("LazyChat Settings")
 	shop_token = settings.get_password("shop_token") if settings.shop_token else None
@@ -277,53 +282,71 @@ def fetch_and_process_orders(page: int = 1) -> dict:
 		"Accept": "application/json",
 	}
 
-	payload = {
-		"page": int(page or 1)
-	}
+	all_created_so_list = []
+	total_fetched = 0
+	current_page = int(page or 1)
+	MAX_PAGES = 50  # safety cap to avoid infinite loop
 
-	try:
-		response = requests.post(api_url, json=payload, headers=headers, timeout=15)
-		if not response.ok:
-			frappe.log_error(
-				f"LazyChat Order Fetch Error (HTTP {response.status_code}): {response.text}",
-				"LazyChat Order Fetch Failed",
-			)
-			frappe.throw(f"LazyChat API returned HTTP {response.status_code}: {response.text[:200]}")
+	while current_page <= MAX_PAGES:
+		payload = {
+			"page": current_page
+		}
 
-		raw_data = response.json()
-	except Exception as e:
-		frappe.log_error(frappe.get_traceback(), "LazyChat Order Fetch Exception")
-		frappe.throw(f"Error fetching orders from LazyChat: {str(e)}")
-
-	orders_list = _extract_orders_list(raw_data)
-
-	created_so_list = []
-	for order_item in orders_list:
 		try:
-			so_name = process_single_lazychat_order(order_item)
-			if so_name:
-				created_so_list.append(so_name)
-		except Exception:
-			order_id = order_item.get("invoice_number") or order_item.get("id") if isinstance(order_item, dict) else str(order_item)
-			frappe.log_error(
-				frappe.get_traceback(),
-				f"LazyChat Order Processing Error for ID {order_id}",
-			)
+			response = requests.post(api_url, json=payload, headers=headers, timeout=15)
+			if not response.ok:
+				frappe.log_error(
+					f"LazyChat Order Fetch Error (HTTP {response.status_code}): {response.text}",
+					"LazyChat Order Fetch Failed",
+				)
+				frappe.throw(f"LazyChat API returned HTTP {response.status_code}: {response.text[:200]}")
+
+			raw_data = response.json()
+		except Exception as e:
+			frappe.log_error(frappe.get_traceback(), "LazyChat Order Fetch Exception")
+			frappe.throw(f"Error fetching orders from LazyChat: {str(e)}")
+
+		orders_list = _extract_orders_list(raw_data)
+
+		# No more orders — stop paginating
+		if not orders_list:
+			break
+
+		total_fetched += len(orders_list)
+
+		for order_item in orders_list:
+			try:
+				so_name = process_single_lazychat_order(order_item)
+				if so_name:
+					all_created_so_list.append(so_name)
+			except Exception:
+				order_id = order_item.get("invoice_number") or order_item.get("id") if isinstance(order_item, dict) else str(order_item)
+				frappe.log_error(
+					frappe.get_traceback(),
+					f"LazyChat Order Processing Error for ID {order_id}",
+				)
+
+		# If fewer orders returned than expected, we've reached the last page
+		if len(orders_list) < 10:
+			break
+
+		current_page += 1
 
 	settings.db_set("last_order_fetch_datetime", frappe.utils.now_datetime())
 
 	return {
 		"page": page,
-		"fetched": len(orders_list),
-		"created": len(created_so_list),
-		"sales_orders": created_so_list,
+		"pages_fetched": current_page - int(page or 1) + 1,
+		"fetched": total_fetched,
+		"created": len(all_created_so_list),
+		"sales_orders": all_created_so_list,
 	}
 
 
 def scheduled_fetch_orders():
 	"""
 	Cron task executed every 10 minutes by Frappe scheduler.
-	Fetches page 1 of orders from LazyChat.
+	Fetches all pages of pending orders from LazyChat.
 	"""
 	settings = frappe.get_single("LazyChat Settings")
 	if not bool(getattr(settings, "enable_integration", True)):
