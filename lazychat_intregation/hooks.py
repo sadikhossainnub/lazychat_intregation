@@ -156,6 +156,10 @@ doc_events = {
 		"on_submit": "lazychat_intregation.utils.product_sync.on_stock_ledger_update",
 		"on_cancel": "lazychat_intregation.utils.product_sync.on_stock_ledger_update",
 	},
+	"Sales Order": {
+		# Cancel Stock Reservation Entries when a LazyChat Sales Order is cancelled
+		"on_cancel": "lazychat_intregation.utils.order_fetch.on_sales_order_cancel",
+	},
 }
 
 # Scheduled Tasks

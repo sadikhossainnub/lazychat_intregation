@@ -8,7 +8,8 @@ frappe.ui.form.on("LazyChat Settings", {
 				callback: function(r) {
 					if (r.message) {
 						frappe.msgprint(
-							__("Fetch complete! Total fetched: {0}, Sales Orders Created: {1}", [
+							__("Fetch complete! Pages: {0}, Total Fetched: {1}, Sales Orders Created: {2}", [
+								r.message.pages_fetched || 1,
 								r.message.fetched,
 								r.message.created
 							])

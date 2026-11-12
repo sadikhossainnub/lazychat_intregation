@@ -150,12 +150,16 @@ def process_single_lazychat_order(data) -> str | None:
 	address = str(contact_data.get("address") or data.get("address") or "").strip()
 
 	customer_name = "LazyChat Customer"
-	if contact_data.get("name"):
-		customer_name = str(contact_data.get("name")).strip()
-	elif data.get("customer_name"):
-		customer_name = str(data.get("customer_name")).strip()
-	elif data.get("name"):
-		customer_name = str(data.get("name")).strip()
+	# LazyChat API uses "full_name" inside contact object
+	raw_name = (
+		contact_data.get("full_name")
+		or contact_data.get("name")
+		or data.get("full_name")
+		or data.get("customer_name")
+		or data.get("name")
+	)
+	if raw_name and str(raw_name).strip():
+		customer_name = str(raw_name).strip()
 	elif phone:
 		customer_name = f"Customer {phone}"
 
@@ -259,7 +263,93 @@ def process_single_lazychat_order(data) -> str | None:
 	so.insert()
 	frappe.db.commit()
 
+	# Reserve stock for each item in the Sales Order (Draft state)
+	_reserve_stock_for_sales_order(so)
+
 	return so.name
+
+
+def _reserve_stock_for_sales_order(so):
+	"""
+	Creates Stock Reservation Entries for each item in the Sales Order (Draft state).
+	ONLY runs if the Sales Order's sales_type is "LazyChat".
+	Requires ERPNext v14+ with Stock Reservation feature enabled.
+	Silently skips if the feature is not available on this installation.
+	"""
+	try:
+		if isinstance(so, str):
+			so = frappe.get_doc("Sales Order", so)
+
+		# Only reserve stock for LazyChat orders
+		so_sales_type = str(getattr(so, "sales_type", "") or "").strip().lower()
+		if so_sales_type not in ["lazychat", "lazy chat", "lazy_chat"]:
+			return
+
+		# Check if Stock Reservation Entry doctype exists
+		if not frappe.db.exists("DocType", "Stock Reservation Entry"):
+			return
+
+		from erpnext.stock.doctype.stock_reservation_entry.stock_reservation_entry import (
+			create_stock_reservation_entries_for_so_items,
+		)
+
+		create_stock_reservation_entries_for_so_items(
+			sales_order=so,
+			notify=False,
+		)
+		frappe.db.commit()
+
+	except Exception:
+		# Stock reservation is optional — log but don't fail the order creation
+		frappe.log_error(
+			frappe.get_traceback(),
+			f"LazyChat: Stock Reservation failed for Sales Order {getattr(so, 'name', so)}",
+		)
+
+
+def _cancel_stock_reservation_for_sales_order(so):
+	"""
+	Cancels all Stock Reservation Entries linked to the Sales Order.
+	ONLY runs if the Sales Order's sales_type is "LazyChat".
+	Called automatically via on_cancel hook in hooks.py.
+	"""
+	try:
+		if isinstance(so, str):
+			so = frappe.get_doc("Sales Order", so)
+
+		# Only cancel stock reservation for LazyChat orders
+		so_sales_type = str(getattr(so, "sales_type", "") or "").strip().lower()
+		if so_sales_type not in ["lazychat", "lazy chat", "lazy_chat"]:
+			return
+
+		# Check if Stock Reservation Entry doctype exists
+		if not frappe.db.exists("DocType", "Stock Reservation Entry"):
+			return
+
+		from erpnext.stock.doctype.stock_reservation_entry.stock_reservation_entry import (
+			cancel_stock_reservation_entries,
+		)
+
+		cancel_stock_reservation_entries(
+			voucher_type="Sales Order",
+			voucher_no=so.name,
+			notify=False,
+		)
+		frappe.db.commit()
+
+	except Exception:
+		frappe.log_error(
+			frappe.get_traceback(),
+			f"LazyChat: Stock Reservation Cancel failed for Sales Order {getattr(so, 'name', so)}",
+		)
+
+
+def on_sales_order_cancel(doc, method=None):
+	"""
+	Hook: triggered when any Sales Order is cancelled.
+	Cancels Stock Reservation Entries only for LazyChat Sales Orders.
+	"""
+	_cancel_stock_reservation_for_sales_order(doc)
 
 
 @frappe.whitelist()

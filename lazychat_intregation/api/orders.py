@@ -2,7 +2,7 @@ import json
 import frappe
 from lazychat_intregation.utils.auth import validate_bearer_token
 from lazychat_intregation.utils.customer import get_or_create_customer
-from lazychat_intregation.utils.order_fetch import _get_sales_type_value
+from lazychat_intregation.utils.order_fetch import _get_sales_type_value, _reserve_stock_for_sales_order
 
 
 @frappe.whitelist(allow_guest=True)
@@ -106,6 +106,9 @@ def create_order():
 	so.flags.ignore_permissions = True
 	so.insert()
 	frappe.db.commit()
+
+	# Reserve stock for each item in Draft Sales Order
+	_reserve_stock_for_sales_order(so)
 
 	frappe.response["type"] = "json"
 	frappe.response["message"] = {
