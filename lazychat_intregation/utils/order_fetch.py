@@ -375,9 +375,8 @@ def fetch_and_process_orders(page: int = 1) -> dict:
 	all_created_so_list = []
 	total_fetched = 0
 	current_page = int(page or 1)
-	MAX_PAGES = 50  # safety cap to avoid infinite loop
 
-	while current_page <= MAX_PAGES:
+	while True:
 		payload = {
 			"page": current_page
 		}
