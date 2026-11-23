@@ -189,9 +189,9 @@ scheduler_events = {
 # Overriding Methods
 # ------------------------------
 #
-# override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "lazychat_intregation.event.get_events"
-# }
+override_whitelisted_methods = {
+	"erpnext.selling.doctype.sales_order.sales_order.make_delivery_note": "lazychat_intregation.custom.sales_order.custom_make_delivery_note"
+}
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
