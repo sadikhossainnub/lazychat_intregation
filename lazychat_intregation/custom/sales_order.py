@@ -1,6 +1,7 @@
 import frappe
 from frappe import _
 
+@frappe.whitelist()
 def custom_make_delivery_note(source_name, target_doc=None, kwargs=None):
 	"""
 	Custom override for erpnext.selling.doctype.sales_order.sales_order.make_delivery_note.
