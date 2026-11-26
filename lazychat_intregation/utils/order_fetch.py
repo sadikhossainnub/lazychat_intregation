@@ -138,7 +138,10 @@ def process_single_lazychat_order(data) -> str | None:
 	if not lazychat_order_id:
 		return None
 
-	existing_so = frappe.db.get_value("Sales Order", {"po_no": lazychat_order_id}, "name")
+	existing_so = (
+		frappe.db.get_value("Sales Order", {"invoice_number": lazychat_order_id}, "name")
+		or frappe.db.get_value("Sales Order", {"po_no": lazychat_order_id}, "name")
+	)
 	if existing_so:
 		return existing_so
 
@@ -248,12 +251,38 @@ def process_single_lazychat_order(data) -> str | None:
 		"items": so_items,
 	}
 
+	if frappe.get_meta("Sales Order").has_field("invoice_number"):
+		so_payload["invoice_number"] = lazychat_order_id
+
 	# Set mandatory sales_type field if present on Sales Order
 	if frappe.get_meta("Sales Order").has_field("sales_type"):
 		so_payload["sales_type"] = _get_sales_type_value()
 
 	if contact_person:
 		so_payload["contact_person"] = contact_person
+		try:
+			contact_doc = frappe.get_doc("Contact", contact_person)
+			so_payload["contact_display"] = (
+				getattr(contact_doc, "get_formatted_name", lambda: None)()
+				or f"{contact_doc.first_name or ''} {contact_doc.last_name or ''}".strip()
+				or contact_doc.name
+			)
+			contact_mob = getattr(contact_doc, "mobile_no", None)
+			contact_ph = getattr(contact_doc, "phone", None)
+			if not contact_mob and hasattr(contact_doc, "phone_nos"):
+				for pn in contact_doc.phone_nos:
+					if pn.is_primary_mobile_no or pn.is_primary_phone:
+						contact_mob = pn.phone
+						break
+				if not contact_mob and contact_doc.phone_nos:
+					contact_mob = contact_doc.phone_nos[0].phone
+
+			so_payload["contact_mobile"] = contact_mob or phone or None
+			so_payload["contact_phone"] = contact_ph or phone or None
+			if getattr(contact_doc, "email_id", None):
+				so_payload["contact_email"] = contact_doc.email_id
+		except Exception:
+			pass
 	if address_docname:
 		so_payload["customer_address"] = address_docname
 		so_payload["shipping_address_name"] = address_docname

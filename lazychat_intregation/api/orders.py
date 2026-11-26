@@ -32,9 +32,23 @@ def create_order():
 	address = (contact.get("address") or "").strip()
 	line_items = data.get("line_items") or []
 	delivery_charge = float(data.get("deliveryCharge") or 0)
-	lazychat_order_id = str(data.get("id") or "")
+	lazychat_order_id = str(data.get("invoice_number") or data.get("id") or "").strip()
 	note = (data.get("note") or "").strip()
 	payment_method = (data.get("payment_method") or "").strip()
+
+	if lazychat_order_id:
+		existing_so = (
+			frappe.db.get_value("Sales Order", {"invoice_number": lazychat_order_id}, "name")
+			or frappe.db.get_value("Sales Order", {"po_no": lazychat_order_id}, "name")
+		)
+		if existing_so:
+			frappe.response["type"] = "json"
+			frappe.response["message"] = {
+				"status": "success",
+				"sales_order": existing_so,
+				"message": f"Sales Order {existing_so} already exists for LazyChat Order {lazychat_order_id}.",
+			}
+			return
 
 	if not line_items:
 		frappe.throw("Order payload has no line_items", frappe.ValidationError)
@@ -93,11 +107,37 @@ def create_order():
 		"items": so_items,
 	}
 
+	if frappe.get_meta("Sales Order").has_field("invoice_number"):
+		so_payload["invoice_number"] = lazychat_order_id
+
 	if frappe.get_meta("Sales Order").has_field("sales_type"):
 		so_payload["sales_type"] = _get_sales_type_value()
 
 	if contact_person:
 		so_payload["contact_person"] = contact_person
+		try:
+			contact_doc = frappe.get_doc("Contact", contact_person)
+			so_payload["contact_display"] = (
+				getattr(contact_doc, "get_formatted_name", lambda: None)()
+				or f"{contact_doc.first_name or ''} {contact_doc.last_name or ''}".strip()
+				or contact_doc.name
+			)
+			contact_mob = getattr(contact_doc, "mobile_no", None)
+			contact_ph = getattr(contact_doc, "phone", None)
+			if not contact_mob and hasattr(contact_doc, "phone_nos"):
+				for pn in contact_doc.phone_nos:
+					if pn.is_primary_mobile_no or pn.is_primary_phone:
+						contact_mob = pn.phone
+						break
+				if not contact_mob and contact_doc.phone_nos:
+					contact_mob = contact_doc.phone_nos[0].phone
+
+			so_payload["contact_mobile"] = contact_mob or phone or None
+			so_payload["contact_phone"] = contact_ph or phone or None
+			if getattr(contact_doc, "email_id", None):
+				so_payload["contact_email"] = contact_doc.email_id
+		except Exception:
+			pass
 	if address_docname:
 		so_payload["customer_address"] = address_docname
 		so_payload["shipping_address_name"] = address_docname

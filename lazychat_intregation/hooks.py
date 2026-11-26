@@ -270,6 +270,12 @@ fixtures = [
 		"filters": [
 			["name", "in", ["LazyChat Manager", "LazyChat User"]]
 		]
+	},
+	{
+		"dt": "Custom Field",
+		"filters": [
+			["name", "in", ["Sales Order-invoice_number"]]
+		]
 	}
 ]
 

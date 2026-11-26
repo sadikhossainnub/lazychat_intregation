@@ -75,6 +75,7 @@ def get_or_create_customer(name: str, phone: str, address: str) -> dict:
 			"doctype": "Contact",
 			"first_name": (name or "").split(" ")[0] or "LazyChat",
 			"last_name": " ".join((name or "").split(" ")[1:]) or None,
+			"is_primary_contact": 1,
 			"links": [{"link_doctype": "Customer", "link_name": customer_name}],
 		})
 		if phone:
@@ -86,6 +87,14 @@ def get_or_create_customer(name: str, phone: str, address: str) -> dict:
 		contact_doc.flags.ignore_permissions = True
 		contact_doc.insert()
 		contact_name = contact_doc.name
+
+		# Also set customer_primary_contact on Customer if not set
+		if frappe.db.exists("Customer", customer_name):
+			curr_primary = frappe.db.get_value("Customer", customer_name, "customer_primary_contact")
+			if not curr_primary:
+				frappe.db.set_value("Customer", customer_name, "customer_primary_contact", contact_name, update_modified=False)
+				if phone:
+					frappe.db.set_value("Customer", customer_name, "mobile_no", phone, update_modified=False)
 
 	# ── 5. Create Address if provided ─────────────────────────────────────────
 	if address:
